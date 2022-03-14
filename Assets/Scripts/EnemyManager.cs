@@ -5,7 +5,7 @@ using UnityEngine;
 public enum EnemyType { OneHand, TwoHand, Archer};
 public enum PatrolType { linear, Random, Loop};
 
-public class EnemyManager : MonoBehaviour
+public class EnemyManager : GameBehaviour<EnemyManager>
 {
     public string[] enemyNames;
     public Transform[] spawnPoints;
@@ -15,7 +15,7 @@ public class EnemyManager : MonoBehaviour
     
     void Start()
     {
-        StartCoroutine(SpawnEnemyDelay());
+        //StartCoroutine(SpawnEnemyDelay());
         //for (int i = 0; i < 101; i++)
         //{
         //    print(i);
@@ -25,11 +25,13 @@ public class EnemyManager : MonoBehaviour
     private void Update()
     {
         
-        if (Input.GetKeyDown(KeyCode.K))
-            KillAllEnemies();
+        //if (Input.GetKeyDown(KeyCode.K))
+        //    KillAllEnemies();
 
-        if (Input.GetKeyDown(KeyCode.B))
-            KillSpecificEnemy("_B");
+        //if (Input.GetKeyDown(KeyCode.B))
+        //    KillSpecificEnemy("_B");
+
+        
     }
     
     /// <summary>
@@ -87,12 +89,46 @@ public class EnemyManager : MonoBehaviour
     /// Kills an enemy based on the gameobject passed in
     /// </summary>
     /// <param name="_enemy">The GameObject of the Enemy</param>
-    void KillEnemy(GameObject _enemy)
+    public void KillEnemy(GameObject _enemy)
     {
         if (enemies.Count == 0)
             return;
 
         Destroy(_enemy);
         enemies.Remove(_enemy);
+    }
+
+    void OnEnemyDied(Enemy _enemy)
+    {
+        KillEnemy(_enemy.gameObject);
+    }
+
+    void OnGameStateChange(GameState _gameState)
+    {
+        switch (_gameState)
+        {
+            case GameState.Playing:
+                StartCoroutine(SpawnEnemyDelay());
+                break;
+            case GameState.Title:
+            case GameState.GameOver:
+            case GameState.Paused:
+                StopAllCoroutines();
+                break;
+        }
+    }
+
+    private void OnEnable()
+    {
+        
+        GameEvents.OnEnemyDied += OnEnemyDied;
+        GameEvents.OnGameStateChange += OnGameStateChange;
+    }
+
+    private void OnDisable()
+    {
+        
+        GameEvents.OnEnemyDied -= OnEnemyDied;
+        GameEvents.OnGameStateChange -= OnGameStateChange;
     }
 }
